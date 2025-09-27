@@ -1,0 +1,101 @@
+run:
+  timeout: 5m
+  issues-exit-code: 1
+  tests: true
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  
+  govet:
+    check-shadowing: true
+  
+  golint:
+    min-confidence: 0.8
+  
+  gofmt:
+    simplify: true
+  
+  goimports:
+    local-prefixes: github.com/fylgushev/gophkeeper
+  
+  gocyclo:
+    min-complexity: 15
+  
+  maligned:
+    suggest-new: true
+  
+  dupl:
+    threshold: 100
+  
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+  
+  lll:
+    line-length: 120
+  
+  unused:
+    check-exported: false
+  
+  unparam:
+    check-exported: true
+  
+  nakedret:
+    max-func-lines: 30
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - varcheck
+    - structcheck
+    - deadcode
+    - gofmt
+    - goimports
+    - golint
+    - gocyclo
+    - dupl
+    - goconst
+    - lll
+    - unparam
+    - nakedret
+    - misspell
+    - prealloc
+    - exportloopref
+  
+  disable:
+    - maligned
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+        - lll
+    
+    - path: cmd/
+      linters:
+        - gocyclo
+    
+    - linters:
+        - lll
+      source: "^//go:generate "
+
+  exclude-use-default: false
+  exclude:
+    - "Error return value of .((os\\.)?std(out|err)\\..*|.*Close|.*Flush|os\\.Remove(All)?|.*printf?|os\\.(Un)?Setenv). is not checked"
