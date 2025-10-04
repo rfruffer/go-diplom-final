@@ -1,4 +1,4 @@
-module github.com/rfruffer/gophkeeper
+module github.com/rfruffer/go-diplom-final
 
 go 1.21
 

@@ -5,8 +5,8 @@ VERSION ?= 1.0.0
 BUILD_DATE ?= $(shell date -u +"%Y-%m-%d %H:%M:%S UTC")
 
 # Go build flags
-LDFLAGS = -ldflags "-X 'github.com/rfruffer/gophkeeper/pkg/version.Version=$(VERSION)' \
-                   -X 'github.com/rfruffer/gophkeeper/pkg/version.BuildDate=$(BUILD_DATE)'"
+LDFLAGS = -ldflags "-X 'github.com/rfruffer/go-diplom-final/pkg/version.Version=$(VERSION)' \
+                   -X 'github.com/rfruffer/go-diplom-final/pkg/version.BuildDate=$(BUILD_DATE)'"
 
 # Build directories
 BUILD_DIR = build

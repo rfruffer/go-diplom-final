@@ -5,7 +5,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/rfruffer/gophkeeper/pkg/version"
+	"github.com/rfruffer/go-diplom-final/pkg/version"
 )
 
 // main основная функция серверного приложения.

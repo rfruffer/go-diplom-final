@@ -11,11 +11,11 @@ import (
 // Переменные устанавливаются во время сборки через -ldflags
 var (
 	// Version версия приложения.
-	// Устанавливается через -ldflags "-X github.com/rfruffer/gophkeeper/pkg/version.Version=1.0.0"
+	// Устанавливается через -ldflags "-X github.com/rfruffer/go-diplom-final/pkg/version.Version=1.0.0"
 	Version = "dev"
 
 	// BuildDate дата и время сборки.
-	// Устанавливается через -ldflags "-X github.com/rfruffer/gophkeeper/pkg/version.BuildDate=2024-01-01T00:00:00Z"
+	// Устанавливается через -ldflags "-X github.com/rfruffer/go-diplom-final/pkg/version.BuildDate=2024-01-01T00:00:00Z"
 	BuildDate = "unknown"
 )
 
