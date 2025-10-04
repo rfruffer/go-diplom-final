@@ -1,14 +1,12 @@
 .PHONY: build build-server build-client clean test test-cover lint vet fmt generate proto docker-build docker-run help
 
 # Build info
-VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+VERSION ?= 1.0.0
 BUILD_DATE ?= $(shell date -u +"%Y-%m-%d %H:%M:%S UTC")
-COMMIT_HASH ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
 # Go build flags
-LDFLAGS = -ldflags "-X 'github.com/fylgushev/gophkeeper/pkg/version.Version=$(VERSION)' \
-                   -X 'github.com/fylgushev/gophkeeper/pkg/version.BuildDate=$(BUILD_DATE)' \
-                   -X 'github.com/fylgushev/gophkeeper/pkg/version.CommitHash=$(COMMIT_HASH)'"
+LDFLAGS = -ldflags "-X 'github.com/rfruffer/gophkeeper/pkg/version.Version=$(VERSION)' \
+                   -X 'github.com/rfruffer/gophkeeper/pkg/version.BuildDate=$(BUILD_DATE)'"
 
 # Build directories
 BUILD_DIR = build
@@ -43,9 +41,10 @@ build-all: clean
 	# Windows
 	@GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/server-windows-amd64.exe ./cmd/server
 	@GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/client-windows-amd64.exe ./cmd/client
-	# macOS
+	# macOS Intel
 	@GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/server-darwin-amd64 ./cmd/server
 	@GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/client-darwin-amd64 ./cmd/client
+	# macOS Apple Silicon
 	@GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o $(BUILD_DIR)/server-darwin-arm64 ./cmd/server
 	@GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o $(BUILD_DIR)/client-darwin-arm64 ./cmd/client
 

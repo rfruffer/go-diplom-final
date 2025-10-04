@@ -1,4 +1,4 @@
-module github.com/fylgushev/gophkeeper
+module github.com/rfruffer/gophkeeper
 
 go 1.21
 
