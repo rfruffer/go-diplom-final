@@ -1,4 +1,4 @@
-package models
+package entities
 
 // LoginPasswordData представляет структуру данных для типа LoginPassword.
 // Содержит пары логин/пароль с дополнительной информацией.
