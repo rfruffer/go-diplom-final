@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "github.com/fylgushev/go-diplom-final/pkg/proto/auth";
+
+import "google/protobuf/timestamp.proto";
+
+// Auth service definition
+service AuthService {
+  // Register a new user
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  
+  // Login user
+  rpc Login(LoginRequest) returns (LoginResponse);
+  
+  // Validate JWT token
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+  
+  // Refresh JWT token
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+}
+
+// Register request message
+message RegisterRequest {
+  string login = 1;        // User login (unique)
+  string password = 2;     // User password (will be hashed)
+}
+
+// Register response message
+message RegisterResponse {
+  bool success = 1;
+  string message = 2;
+  string access_token = 3;
+  string refresh_token = 4;
+  google.protobuf.Timestamp expires_at = 5;
+}
+
+// Login request message
+message LoginRequest {
+  string login = 1;
+  string password = 2;
+}
+
+// Login response message
+message LoginResponse {
+  bool success = 1;
+  string message = 2;
+  string access_token = 3;
+  string refresh_token = 4;
+  google.protobuf.Timestamp expires_at = 5;
+  User user = 6;
+}
+
+// Validate token request
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+// Validate token response
+message ValidateTokenResponse {
+  bool valid = 1;
+  string user_id = 2;
+  string login = 3;
+  google.protobuf.Timestamp expires_at = 4;
+}
+
+// Refresh token request
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+// Refresh token response
+message RefreshTokenResponse {
+  bool success = 1;
+  string message = 2;
+  string access_token = 3;
+  string refresh_token = 4;
+  google.protobuf.Timestamp expires_at = 5;
+}
+
+// User information message
+message User {
+  string id = 1;
+  string login = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+}

@@ -1,0 +1,173 @@
+syntax = "proto3";
+
+package data;
+
+option go_package = "github.com/fylgushev/go-diplom-final/pkg/proto/data";
+
+import "google/protobuf/timestamp.proto";
+
+// Data service definition
+service DataService {
+  // Store new data item
+  rpc StoreData(StoreDataRequest) returns (StoreDataResponse);
+  
+  // Get data by ID
+  rpc GetData(GetDataRequest) returns (GetDataResponse);
+  
+  // Get all user data
+  rpc GetUserData(GetUserDataRequest) returns (GetUserDataResponse);
+  
+  // Update existing data
+  rpc UpdateData(UpdateDataRequest) returns (UpdateDataResponse);
+  
+  // Delete data (soft delete)
+  rpc DeleteData(DeleteDataRequest) returns (DeleteDataResponse);
+  
+  // Sync data - get updates since last sync
+  rpc SyncData(SyncDataRequest) returns (SyncDataResponse);
+}
+
+// Data type enumeration
+enum DataType {
+  DATA_TYPE_UNSPECIFIED = 0;
+  DATA_TYPE_CREDENTIALS = 1;  // Login/password pairs
+  DATA_TYPE_TEXT = 2;         // Text notes
+  DATA_TYPE_BINARY = 3;       // Binary files
+  DATA_TYPE_CARD = 4;         // Bank card data
+}
+
+// Store data request
+message StoreDataRequest {
+  string user_id = 1;
+  DataType type = 2;
+  string metadata = 3;        // JSON metadata (name, description, etc.)
+  bytes data = 4;             // Encrypted data payload
+  string checksum = 5;        // Data integrity checksum
+}
+
+// Store data response
+message StoreDataResponse {
+  bool success = 1;
+  string message = 2;
+  string data_id = 3;
+  int64 version = 4;
+}
+
+// Get data request
+message GetDataRequest {
+  string user_id = 1;
+  string data_id = 2;
+}
+
+// Get data response
+message GetDataResponse {
+  bool success = 1;
+  string message = 2;
+  DataItem data_item = 3;
+}
+
+// Get user data request
+message GetUserDataRequest {
+  string user_id = 1;
+  DataType type = 2;          // Optional filter by type
+  int32 limit = 3;            // Optional limit
+  int32 offset = 4;           // Optional offset for pagination
+}
+
+// Get user data response
+message GetUserDataResponse {
+  bool success = 1;
+  string message = 2;
+  repeated DataItem data_items = 3;
+  int32 total_count = 4;
+}
+
+// Update data request
+message UpdateDataRequest {
+  string user_id = 1;
+  string data_id = 2;
+  string metadata = 3;        // Updated metadata
+  bytes data = 4;             // Updated encrypted data
+  string checksum = 5;        // Updated checksum
+  int64 current_version = 6;  // For optimistic locking
+}
+
+// Update data response
+message UpdateDataResponse {
+  bool success = 1;
+  string message = 2;
+  int64 new_version = 3;
+}
+
+// Delete data request
+message DeleteDataRequest {
+  string user_id = 1;
+  string data_id = 2;
+  int64 current_version = 3;  // For optimistic locking
+}
+
+// Delete data response
+message DeleteDataResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Sync data request
+message SyncDataRequest {
+  string user_id = 1;
+  google.protobuf.Timestamp last_sync = 2;
+  repeated string exclude_ids = 3;  // IDs to exclude from sync
+}
+
+// Sync data response
+message SyncDataResponse {
+  bool success = 1;
+  string message = 2;
+  repeated DataItem updated_items = 3;
+  repeated string deleted_ids = 4;
+  google.protobuf.Timestamp sync_timestamp = 5;
+}
+
+// Data item message
+message DataItem {
+  string id = 1;
+  string user_id = 2;
+  DataType type = 3;
+  string metadata = 4;        // JSON metadata
+  bytes data = 5;             // Encrypted data
+  string checksum = 6;        // Data integrity checksum
+  int64 version = 7;          // Version for conflict resolution
+  bool is_deleted = 8;        // Soft delete flag
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+// Credentials data structure (for metadata)
+message CredentialsMetadata {
+  string name = 1;            // Service/site name
+  string description = 2;     // Optional description
+  string url = 3;             // Optional URL
+}
+
+// Text data structure (for metadata)
+message TextMetadata {
+  string name = 1;            // Note title
+  string description = 2;     // Optional description
+  repeated string tags = 3;   // Optional tags
+}
+
+// Binary file structure (for metadata)
+message BinaryMetadata {
+  string filename = 1;        // Original filename
+  string content_type = 2;    // MIME type
+  int64 file_size = 3;        // File size in bytes
+  string description = 4;     // Optional description
+}
+
+// Bank card structure (for metadata)
+message CardMetadata {
+  string name = 1;            // Card name/description
+  string bank_name = 2;       // Bank name
+  string card_type = 3;       // Visa, MasterCard, etc.
+  string description = 4;     // Optional description
+}
