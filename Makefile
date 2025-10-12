@@ -5,8 +5,8 @@ VERSION ?= 1.0.0
 BUILD_DATE ?= $(shell date -u +"%Y-%m-%d %H:%M:%S UTC")
 
 # Go build flags
-LDFLAGS = -ldflags "-X 'github.com/rfruffer/go-diplom-final/pkg/version.Version=$(VERSION)' \
-                   -X 'github.com/rfruffer/go-diplom-final/pkg/version.BuildDate=$(BUILD_DATE)'"
+LDFLAGS = -ldflags "-X 'github.com/fylgushev/go-diplom-final/pkg/version.Version=$(VERSION)' \
+                   -X 'github.com/fylgushev/go-diplom-final/pkg/version.BuildDate=$(BUILD_DATE)'"
 
 # Build directories
 BUILD_DIR = build
@@ -98,9 +98,10 @@ generate:
 ## Generate protobuf files
 proto:
 	@echo "Generating protobuf files..."
+	@mkdir -p pkg/proto/auth pkg/proto/data
 	@protoc --go_out=. --go_opt=paths=source_relative \
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
-		internal/api/proto/*.proto
+		proto/auth/*.proto proto/data/*.proto
 
 ## Install dependencies
 deps:
