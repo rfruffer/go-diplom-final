@@ -94,3 +94,46 @@ func RegisterAuthServiceServer(s *grpc.Server, srv AuthServiceServer) {
 	// TODO: заменить на сгенерированную protobuf реализацию
 	// Пока что заглушка для компиляции
 }
+
+// NewAuthServiceClient создает новый клиент AuthService
+func NewAuthServiceClient(conn grpc.ClientConnInterface) AuthServiceClient {
+	// TODO: заменить на сгенерированную protobuf реализацию
+	// Пока что заглушка для компиляции
+	return &authServiceClient{conn: conn}
+}
+
+// authServiceClient заглушка для реализации AuthServiceClient
+type authServiceClient struct {
+	conn grpc.ClientConnInterface
+}
+
+func (c *authServiceClient) Register(ctx context.Context, req *RegisterRequest) (*RegisterResponse, error) {
+	// TODO: реализовать gRPC вызов
+	return &RegisterResponse{
+		Success: false,
+		Message: "Not implemented",
+	}, nil
+}
+
+func (c *authServiceClient) Login(ctx context.Context, req *LoginRequest) (*LoginResponse, error) {
+	// TODO: реализовать gRPC вызов
+	return &LoginResponse{
+		Success: false,
+		Message: "Not implemented",
+	}, nil
+}
+
+func (c *authServiceClient) ValidateToken(ctx context.Context, req *ValidateTokenRequest) (*ValidateTokenResponse, error) {
+	// TODO: реализовать gRPC вызов
+	return &ValidateTokenResponse{
+		Valid: false,
+	}, nil
+}
+
+func (c *authServiceClient) RefreshToken(ctx context.Context, req *RefreshTokenRequest) (*RefreshTokenResponse, error) {
+	// TODO: реализовать gRPC вызов
+	return &RefreshTokenResponse{
+		Success: false,
+		Message: "Not implemented",
+	}, nil
+}

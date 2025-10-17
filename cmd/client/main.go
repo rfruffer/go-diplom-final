@@ -3,16 +3,10 @@
 package main
 
 import (
-	"fmt"
-
-	"github.com/rfruffer/go-diplom-final/pkg/version"
+	"github.com/fylgushev/go-diplom-final/internal/interfaces/cli"
 )
 
 // main основная функция клиентского приложения.
-// todo Временная реализация для тестирования сборки и версионирования.
 func main() {
-	fmt.Println("GophKeeper Client")
-	fmt.Println("==================")
-	fmt.Println(version.FormatForCLI())
-	fmt.Println("\nКлиент в разработке...")
+	cli.Execute()
 }
