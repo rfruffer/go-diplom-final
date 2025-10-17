@@ -11,9 +11,13 @@ import "fmt"
 type DataType int
 
 const (
+	// DataTypeUnknown представляет неизвестный или неопределенный тип данных.
+	// Используется как значение по умолчанию и для фильтрации.
+	DataTypeUnknown DataType = iota
+
 	// DataTypeLoginPassword представляет тип данных для пар логин/пароль.
 	// Используется для хранения учетных записей пользователей на различных сервисах.
-	DataTypeLoginPassword DataType = iota
+	DataTypeLoginPassword
 
 	// DataTypeText представляет тип для произвольных текстовых данных.
 	// Может содержать заметки, коды активации, секретные вопросы и другую текстовую информацию.
@@ -33,6 +37,8 @@ const (
 // Возвращает понятное человеку название типа данных.
 func (dt DataType) String() string {
 	switch dt {
+	case DataTypeUnknown:
+		return "unknown"
 	case DataTypeLoginPassword:
 		return "login_password"
 	case DataTypeText:
@@ -50,7 +56,7 @@ func (dt DataType) String() string {
 // Возвращает true, если тип данных определен в системе, иначе false.
 // Используется для валидации входных данных.
 func (dt DataType) IsValid() bool {
-	return dt >= DataTypeLoginPassword && dt <= DataTypeCreditCard
+	return dt >= DataTypeUnknown && dt <= DataTypeCreditCard
 }
 
 // ParseDataType преобразует строковое представление в тип DataType.

@@ -8,6 +8,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+
+	"github.com/fylgushev/go-diplom-final/internal/domain/services"
 )
 
 // ContextKey is a type for context keys
@@ -22,14 +24,11 @@ const (
 
 // TokenManager interface for JWT operations
 type TokenManager interface {
-	ValidateToken(tokenString string) (*Claims, error)
+	ValidateToken(tokenString string) (*services.Claims, error)
 }
 
-// Claims represents JWT claims
-type Claims struct {
-	UserID string `json:"user_id"`
-	Login  string `json:"login"`
-}
+// Claims is an alias for services.Claims
+type Claims = services.Claims
 
 // AuthInterceptor provides JWT authentication middleware for gRPC
 type AuthInterceptor struct {

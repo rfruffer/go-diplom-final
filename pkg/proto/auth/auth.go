@@ -3,6 +3,8 @@ package auth
 import (
 	"context"
 	"time"
+
+	"google.golang.org/grpc"
 )
 
 // AuthServiceServer is the interface for auth service implementation
@@ -85,4 +87,10 @@ type User struct {
 	Login     string    `json:"login"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// RegisterAuthServiceServer регистрирует AuthService сервер в gRPC
+func RegisterAuthServiceServer(s *grpc.Server, srv AuthServiceServer) {
+	// TODO: заменить на сгенерированную protobuf реализацию
+	// Пока что заглушка для компиляции
 }
