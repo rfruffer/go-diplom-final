@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -98,4 +99,56 @@ func (r *DataRepository) GetDataItemsSince(ctx context.Context, userID string, s
 	}
 	
 	return items, nil
+}
+
+// GetUserDataItemsModifiedAfter получает элементы данных пользователя, измененные после указанного времени
+func (r *DataRepository) GetUserDataItemsModifiedAfter(ctx context.Context, userID string, after time.Time) ([]*entities.DataItem, int32, error) {
+	var items []*entities.DataItem
+	var total int64
+
+	query := r.db.WithContext(ctx).Where("user_id = ? AND updated_at > ?", userID, after)
+	
+	// Подсчет общего количества
+	if err := query.Model(&entities.DataItem{}).Count(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("failed to count modified data items: %w", err)
+	}
+
+	// Получение данных
+	err := query.Order("updated_at ASC").Find(&items).Error
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get modified data items: %w", err)
+	}
+
+	return items, int32(total), nil
+}
+
+// GetUserLastSyncTime получает время последней синхронизации пользователя
+func (r *DataRepository) GetUserLastSyncTime(ctx context.Context, userID string) (time.Time, error) {
+	var user entities.User
+	err := r.db.WithContext(ctx).Select("last_sync_at").Where("id = ?", userID).First(&user).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return time.Time{}, entities.ErrUserNotFound
+		}
+		return time.Time{}, fmt.Errorf("failed to get user last sync time: %w", err)
+	}
+	
+	if user.LastSyncAt == nil {
+		return time.Time{}, nil
+	}
+	
+	return *user.LastSyncAt, nil
+}
+
+// UpdateUserLastSyncTime обновляет время последней синхронизации пользователя
+func (r *DataRepository) UpdateUserLastSyncTime(ctx context.Context, userID string, syncTime time.Time) error {
+	err := r.db.WithContext(ctx).Model(&entities.User{}).
+		Where("id = ?", userID).
+		Update("last_sync_at", syncTime).Error
+	
+	if err != nil {
+		return fmt.Errorf("failed to update user last sync time: %w", err)
+	}
+	
+	return nil
 }

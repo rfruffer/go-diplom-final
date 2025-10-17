@@ -25,6 +25,9 @@ service DataService {
   
   // Sync data - get updates since last sync
   rpc SyncData(SyncDataRequest) returns (SyncDataResponse);
+  
+  // Advanced sync - bidirectional synchronization with conflict resolution
+  rpc SynchronizeData(SynchronizeDataRequest) returns (SynchronizeDataResponse);
 }
 
 // Data type enumeration
@@ -170,4 +173,56 @@ message CardMetadata {
   string bank_name = 2;       // Bank name
   string card_type = 3;       // Visa, MasterCard, etc.
   string description = 4;     // Optional description
+}
+
+// Sync action enumeration
+enum SyncAction {
+  SYNC_ACTION_UNSPECIFIED = 0;
+  SYNC_ACTION_CREATE = 1;
+  SYNC_ACTION_UPDATE = 2;
+  SYNC_ACTION_DELETE = 3;
+}
+
+// Conflict resolution strategy
+enum ConflictResolutionStrategy {
+  CONFLICT_RESOLVE_UNSPECIFIED = 0;
+  CONFLICT_RESOLVE_BY_VERSION = 1;
+  CONFLICT_RESOLVE_BY_TIMESTAMP = 2;
+  CONFLICT_RESOLVE_SERVER_WINS = 3;
+  CONFLICT_RESOLVE_CLIENT_WINS = 4;
+}
+
+// Sync item for advanced synchronization
+message SyncItem {
+  SyncAction action = 1;
+  DataItem data_item = 2;
+  ConflictResolutionStrategy conflict_resolution = 3;
+}
+
+// Sync result for advanced synchronization
+message SyncResult {
+  string item_id = 1;
+  SyncAction action = 2;
+  bool success = 3;
+  string error = 4;
+  bool conflict_resolved = 5;
+  int64 final_version = 6;
+}
+
+// Advanced synchronization request
+message SynchronizeDataRequest {
+  string user_id = 1;
+  google.protobuf.Timestamp last_sync_time = 2;
+  repeated SyncItem items = 3;
+  ConflictResolutionStrategy conflict_strategy = 4;
+}
+
+// Advanced synchronization response
+message SynchronizeDataResponse {
+  bool success = 1;
+  string message = 2;
+  repeated SyncResult results = 3;
+  repeated SyncItem server_changes = 4;
+  google.protobuf.Timestamp sync_timestamp = 5;
+  int32 total_conflicts = 6;
 }
