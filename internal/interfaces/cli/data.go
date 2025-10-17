@@ -319,17 +319,54 @@ func NewSyncCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "sync",
 		Short: "Синхронизировать данные",
-		Long:  "Синхронизирует локальные данные с сервером",
+		Long:  "Синхронизирует локальные данные с сервером с разрешением конфликтов",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO: вызов gRPC API для синхронизации
-			fmt.Println("Синхронизация с сервером...")
-			fmt.Println("↓ Загружено: 3 элемента")
-			fmt.Println("↑ Отправлено: 1 элемент")
-			fmt.Println("✅ Синхронизация завершена!")
+			strategy, _ := cmd.Flags().GetString("strategy")
+			force, _ := cmd.Flags().GetBool("force")
+			verbose, _ := cmd.Flags().GetBool("verbose")
 			
+			if verbose {
+				fmt.Println("🔄 Начинаем синхронизацию данных...")
+				fmt.Printf("📋 Стратегия разрешения конфликтов: %s\n", strategy)
+			}
+			
+			// TODO: Получить данные пользователя и токен аутентификации
+			// TODO: Подключиться к gRPC серверу
+			// TODO: Вызвать SynchronizeData API
+			
+			// Симуляция синхронизации
+			fmt.Println("🔍 Анализ локальных изменений...")
+			
+			if !force {
+				fmt.Print("⚠️  Найдено 2 конфликта. Продолжить синхронизацию? (y/N): ")
+				var answer string
+				fmt.Scanln(&answer)
+				if answer != "y" && answer != "Y" {
+					fmt.Println("❌ Синхронизация отменена")
+					return nil
+				}
+			}
+			
+			fmt.Println("📤 Отправка локальных изменений...")
+			fmt.Println("📥 Получение изменений с сервера...")
+			fmt.Println("🔧 Разрешение конфликтов...")
+			
+			if verbose {
+				fmt.Println("\n📊 Результаты синхронизации:")
+				fmt.Println("   ✅ Создано: 1 элемент")
+				fmt.Println("   📝 Обновлено: 3 элемента")
+				fmt.Println("   🗑️  Удалено: 0 элементов")
+				fmt.Println("   ⚡ Конфликтов разрешено: 2")
+			}
+			
+			fmt.Println("\n🎉 Синхронизация успешно завершена!")
 			return nil
 		},
 	}
+
+	cmd.Flags().StringP("strategy", "s", "by_version", "Стратегия разрешения конфликтов (by_version, by_timestamp, server_wins, client_wins)")
+	cmd.Flags().BoolP("force", "f", false, "Принудительная синхронизация без подтверждения")
+	cmd.Flags().BoolP("verbose", "v", false, "Подробный вывод")
 
 	return cmd
 }

@@ -42,6 +42,10 @@ type User struct {
 	// IsActive флаг активности пользователя.
 	// Позволяет временно отключать пользователей без удаления их данных.
 	IsActive bool `json:"is_active" gorm:"default:true"`
+
+	// LastSyncAt время последней синхронизации данных пользователя.
+	// Используется для определения инкрементальных обновлений при синхронизации.
+	LastSyncAt *time.Time `json:"last_sync_at" gorm:"type:timestamp"`
 }
 
 // NewUser создает новый экземпляр пользователя с базовыми значениями.
@@ -81,6 +85,13 @@ func (u *User) Deactivate() {
 // Активирует ранее деактивированного пользователя.
 func (u *User) Activate() {
 	u.IsActive = true
+}
+
+// UpdateLastSync обновляет время последней синхронизации пользователя.
+// Вызывается после успешной синхронизации данных.
+func (u *User) UpdateLastSync() {
+	now := time.Now()
+	u.LastSyncAt = &now
 }
 
 // TableName возвращает название таблицы в базе данных для модели User.

@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"context"
+	"time"
 
 	"github.com/fylgushev/go-diplom-final/internal/domain/entities"
 )
@@ -23,4 +24,9 @@ type DataRepository interface {
 	UpdateDataItem(ctx context.Context, item *entities.DataItem) error
 	DeleteDataItem(ctx context.Context, userID, itemID string) error
 	GetDataItemsSince(ctx context.Context, userID string, since int64) ([]*entities.DataItem, error)
+	
+	// Sync-related methods
+	GetUserDataItemsModifiedAfter(ctx context.Context, userID string, after time.Time) ([]*entities.DataItem, int32, error)
+	GetUserLastSyncTime(ctx context.Context, userID string) (time.Time, error)
+	UpdateUserLastSyncTime(ctx context.Context, userID string, syncTime time.Time) error
 }
