@@ -10,6 +10,12 @@ import (
 	"io"
 )
 
+// Cipher интерфейс для шифрования и расшифровки данных
+type Cipher interface {
+	Encrypt(plaintext []byte) ([]byte, error)
+	Decrypt(ciphertext []byte) ([]byte, error)
+}
+
 // Ошибки шифрования
 var (
 	// ErrInvalidKeySize возникает при неподдерживаемом размере ключа шифрования.

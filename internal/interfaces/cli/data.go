@@ -7,6 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
+
+	"github.com/fylgushev/go-diplom-final/internal/domain/services"
 )
 
 // NewAddCmd создает команду добавления данных
@@ -58,6 +60,12 @@ func NewAddPasswordCmd() *cobra.Command {
 
 			url, _ := cmd.Flags().GetString("url")
 			notes, _ := cmd.Flags().GetString("notes")
+
+			// Валидация входных данных
+			validator := services.NewValidator()
+			if err := validator.ValidateLoginPassword(login, password, url); err != nil {
+				return fmt.Errorf("ошибка валидации: %w", err)
+			}
 
 			// TODO: вызов gRPC API для сохранения
 			// Используем url и notes для метаданных
@@ -150,6 +158,12 @@ func NewAddCardCmd() *cobra.Command {
 			}
 
 			holder, _ := cmd.Flags().GetString("holder")
+
+			// Валидация входных данных
+			validator := services.NewValidator()
+			if err := validator.ValidateCreditCard(number, expiry, cvv, holder); err != nil {
+				return fmt.Errorf("ошибка валидации: %w", err)
+			}
 
 			// TODO: вызов gRPC API для сохранения
 			// Используем holder для метаданных
