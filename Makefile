@@ -63,7 +63,13 @@ test-cover:
 	@echo "Running tests with coverage..."
 	@go test -v -coverprofile=coverage.out ./...
 	@go tool cover -html=coverage.out -o coverage.html
+	@go tool cover -func=coverage.out | tail -1
 	@echo "Coverage report generated: coverage.html"
+
+## Run tests with coverage summary
+test-cover-summary:
+	@echo "Running tests with coverage summary..."
+	@go test -cover ./... 2>&1 | grep coverage
 
 ## Run unit tests
 test-unit:
@@ -115,6 +121,17 @@ dev-deps:
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	@go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	@go install github.com/stretchr/testify@latest
+
+## Run server locally
+run-server:
+	@echo "Running server..."
+	@go run ./cmd/server
+
+## Run client locally
+run-client:
+	@echo "Running client..."
+	@go run ./cmd/client
 
 ## Build Docker images
 docker-build:
