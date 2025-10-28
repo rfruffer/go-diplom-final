@@ -87,24 +87,33 @@ make build-all
 # Все тесты
 make test
 
-# Тесты с покрытием
+# Тесты с покрытием (генерирует coverage.html)
 make test-cover
 
-# Юнит-тесты (по слоям)
-go test ./tests/unit/...
+# Краткая сводка по покрытию
+make test-cover-summary
 
-# Тесты доменной логики
-go test ./tests/unit/domain/...
-
-# Тесты инфраструктуры
-go test ./tests/unit/infrastructure/...
-
-# Интеграционные тесты
-go test ./tests/integration/...
-
-# End-to-end тесты
-go test ./tests/e2e/...
+# Тесты конкретных пакетов
+go test ./internal/domain/entities -v -cover
+go test ./internal/domain/services -v -cover
+go test ./internal/infrastructure/config -v -cover
+go test ./internal/infrastructure/crypto -v -cover
 ```
+
+### Текущее покрытие тестами
+
+Проект имеет **40.6%** общего покрытия кода тестами:
+
+| Пакет | Покрытие |
+|-------|----------|
+| `internal/domain/entities` | 89.2% |
+| `internal/infrastructure/crypto` | 87.0% |
+| `internal/interfaces/grpc/middleware` | 77.8% |
+| `internal/infrastructure/config` | 66.1% |
+| `internal/domain/services` | 43.0% |
+| `pkg/version` | 100% |
+
+Основные пакеты бизнес-логики и критичных компонентов имеют высокое покрытие тестами.
 
 ### Проверка кода
 
@@ -124,12 +133,22 @@ make fmt
 ### Сервер
 
 ```bash
+# Запуск скомпилированного сервера
 ./build/server --config config/server.yaml
+
+# Или запуск через Go (для разработки)
+make run-server
 ```
 
 ### Клиент
 
 ```bash
+# Запуск скомпилированного клиента
+./build/client
+
+# Или запуск через Go (для разработки)
+make run-client
+
 # Регистрация
 ./build/client register --username myuser --password mypass
 
