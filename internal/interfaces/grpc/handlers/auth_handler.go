@@ -9,6 +9,7 @@ import (
 
 // AuthHandler implements auth gRPC service
 type AuthHandler struct {
+	auth.UnimplementedAuthServiceServer
 	authService *services.AuthService
 }
 

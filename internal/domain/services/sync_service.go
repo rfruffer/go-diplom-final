@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/fylgushev/go-diplom-final/internal/domain/entities"
-	"github.com/fylgushev/go-diplom-final/internal/domain/interfaces"
 )
 
 // SyncAction представляет тип действия синхронизации
@@ -89,11 +88,11 @@ type SyncResponse struct {
 
 // SyncService сервис для управления синхронизацией данных между клиентами
 type SyncService struct {
-	dataRepo interfaces.DataRepository
+	dataRepo DataRepository
 }
 
 // NewSyncService создает новый сервис синхронизации
-func NewSyncService(dataRepo interfaces.DataRepository) *SyncService {
+func NewSyncService(dataRepo DataRepository) *SyncService {
 	return &SyncService{
 		dataRepo: dataRepo,
 	}

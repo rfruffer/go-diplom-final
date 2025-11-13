@@ -5,19 +5,18 @@ import (
 	"fmt"
 
 	"github.com/fylgushev/go-diplom-final/internal/domain/entities"
-	"github.com/fylgushev/go-diplom-final/internal/domain/interfaces"
 	"github.com/fylgushev/go-diplom-final/internal/infrastructure/crypto"
 )
 
 // DataService сервис для работы с данными пользователя
 type DataService struct {
-	dataRepo   interfaces.DataRepository
+	dataRepo   DataRepository
 	serializer *DataSerializer
-	cipher     crypto.Cipher
+	cipher     Cipher
 }
 
 // NewDataService создает новый сервис данных
-func NewDataService(dataRepo interfaces.DataRepository, masterKey []byte) (*DataService, error) {
+func NewDataService(dataRepo DataRepository, masterKey []byte) (*DataService, error) {
 	cipher, err := crypto.NewAESCipher(masterKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cipher: %w", err)

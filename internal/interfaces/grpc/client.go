@@ -93,7 +93,7 @@ func (c *Client) Register(ctx context.Context, login, password string) error {
 	c.config.SetAuthTokens(
 		resp.AccessToken,
 		resp.RefreshToken,
-		resp.ExpiresAt,
+		resp.ExpiresAt.AsTime(),
 		"", // UserID будет получен при логине
 		login,
 	)
@@ -120,13 +120,13 @@ func (c *Client) Login(ctx context.Context, login, password string) error {
 	// Сохраняем токены и информацию о пользователе
 	userID := ""
 	if resp.User != nil {
-		userID = resp.User.ID
+		userID = resp.User.Id
 	}
 
 	c.config.SetAuthTokens(
 		resp.AccessToken,
 		resp.RefreshToken,
-		resp.ExpiresAt,
+		resp.ExpiresAt.AsTime(),
 		userID,
 		login,
 	)
@@ -162,7 +162,7 @@ func (c *Client) RefreshTokens(ctx context.Context) error {
 	// Обновляем токены в конфигурации
 	c.config.AccessToken = resp.AccessToken
 	c.config.RefreshToken = resp.RefreshToken
-	c.config.TokenExpiresAt = resp.ExpiresAt.Unix()
+	c.config.TokenExpiresAt = resp.ExpiresAt.AsTime().Unix()
 
 	return c.SaveConfig()
 }

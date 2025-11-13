@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/fylgushev/go-diplom-final/internal/domain/entities"
-	"github.com/fylgushev/go-diplom-final/internal/domain/interfaces"
+	"github.com/fylgushev/go-diplom-final/internal/domain/services"
 )
 
 // UserRepository реализует интерфейс UserRepository с использованием GORM
@@ -16,7 +16,7 @@ type UserRepository struct {
 }
 
 // NewUserRepository создает новый экземпляр UserRepository
-func NewUserRepository(db *gorm.DB) interfaces.UserRepository {
+func NewUserRepository(db *gorm.DB) services.UserRepository {
 	return &UserRepository{db: db}
 }
 

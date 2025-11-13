@@ -6,6 +6,7 @@ import (
 	"github.com/fylgushev/go-diplom-final/internal/domain/entities"
 	"github.com/fylgushev/go-diplom-final/internal/domain/services"
 	"github.com/fylgushev/go-diplom-final/pkg/proto/data"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // SyncHandler implements sync gRPC service
@@ -24,32 +25,17 @@ func NewSyncHandler(syncService *services.SyncService, dataService *services.Dat
 
 // SynchronizeData handles advanced bidirectional synchronization with conflict resolution
 func (h *SyncHandler) SynchronizeData(ctx context.Context, req *data.SynchronizeDataRequest) (*data.SynchronizeDataResponse, error) {
-	// Получаем время последней синхронизации
-	lastSyncTime := req.LastSyncTime
-
 	// Конвертируем protobuf items в доменные объекты
-	syncItems := make([]services.SyncItem, 0, len(req.Items))
-	for _, item := range req.Items {
-		syncItem, err := h.convertProtoSyncItemToDomain(item)
-		if err != nil {
-			return &data.SynchronizeDataResponse{
-				Success: false,
-				Message: "failed to convert sync item: " + err.Error(),
-			}, nil
-		}
-		syncItems = append(syncItems, syncItem)
-	}
-
-	// Создаем запрос синхронизации
-	syncRequest := &services.SyncRequest{
-		UserID:           req.UserId,
-		LastSyncTime:     lastSyncTime,
-		Items:            syncItems,
-		ConflictStrategy: h.convertProtoConflictStrategy(req.ConflictStrategy),
+	syncItems, err := h.convertProtoSyncItems(req.Items)
+	if err != nil {
+		return &data.SynchronizeDataResponse{
+			Success: false,
+			Message: "failed to convert sync items: " + err.Error(),
+		}, nil
 	}
 
 	// Выполняем синхронизацию
-	syncResponse, err := h.syncService.SynchronizeData(ctx, syncRequest)
+	syncResponse, err := h.performSync(ctx, req, syncItems)
 	if err != nil {
 		return &data.SynchronizeDataResponse{
 			Success: false,
@@ -57,39 +43,75 @@ func (h *SyncHandler) SynchronizeData(ctx context.Context, req *data.Synchronize
 		}, nil
 	}
 
-	// Обновляем время последней синхронизации
-	if err := h.syncService.UpdateLastSyncTime(ctx, req.UserId, syncResponse.SyncTimestamp); err != nil {
-		// Логируем ошибку, но не прерываем операцию
+	// Конвертируем результат обратно в protobuf
+	return h.buildSyncResponse(syncResponse), nil
+}
+
+// convertProtoSyncItems конвертирует список protobuf sync items в доменные объекты
+func (h *SyncHandler) convertProtoSyncItems(items []*data.SyncItem) ([]services.SyncItem, error) {
+	syncItems := make([]services.SyncItem, 0, len(items))
+	for _, item := range items {
+		syncItem, err := h.convertProtoSyncItemToDomain(item)
+		if err != nil {
+			return nil, err
+		}
+		syncItems = append(syncItems, syncItem)
+	}
+	return syncItems, nil
+}
+
+// performSync выполняет синхронизацию и обновляет время
+func (h *SyncHandler) performSync(ctx context.Context, req *data.SynchronizeDataRequest, syncItems []services.SyncItem) (*services.SyncResponse, error) {
+	syncRequest := &services.SyncRequest{
+		UserID:           req.UserId,
+		LastSyncTime:     req.LastSyncTime.AsTime(),
+		Items:            syncItems,
+		ConflictStrategy: h.convertProtoConflictStrategy(req.ConflictStrategy),
 	}
 
-	// Конвертируем результат обратно в protobuf
+	syncResponse, err := h.syncService.SynchronizeData(ctx, syncRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	// Обновляем время последней синхронизации (ошибки игнорируем)
+	_ = h.syncService.UpdateLastSyncTime(ctx, req.UserId, syncResponse.SyncTimestamp)
+
+	return syncResponse, nil
+}
+
+// buildSyncResponse строит protobuf ответ из доменного объекта
+func (h *SyncHandler) buildSyncResponse(syncResponse *services.SyncResponse) *data.SynchronizeDataResponse {
 	protoResponse := &data.SynchronizeDataResponse{
 		Success:        syncResponse.Success,
-		SyncTimestamp:  syncResponse.SyncTimestamp,
+		SyncTimestamp:  timestamppb.New(syncResponse.SyncTimestamp),
 		TotalConflicts: int32(syncResponse.TotalConflicts),
+		Results:        h.convertSyncResults(syncResponse.Results),
+		ServerChanges:  h.convertServerChanges(syncResponse.ServerChanges),
 	}
+	return protoResponse
+}
 
-	// Конвертируем результаты
-	protoResponse.Results = make([]*data.SyncResult, 0, len(syncResponse.Results))
-	for _, result := range syncResponse.Results {
-		protoResult, err := h.convertDomainSyncResultToProto(result)
-		if err != nil {
-			continue // Пропускаем элементы с ошибками
+// convertSyncResults конвертирует результаты синхронизации
+func (h *SyncHandler) convertSyncResults(results []services.SyncResult) []*data.SyncResult {
+	protoResults := make([]*data.SyncResult, 0, len(results))
+	for _, result := range results {
+		if protoResult, err := h.convertDomainSyncResultToProto(result); err == nil {
+			protoResults = append(protoResults, protoResult)
 		}
-		protoResponse.Results = append(protoResponse.Results, protoResult)
 	}
+	return protoResults
+}
 
-	// Конвертируем изменения с сервера
-	protoResponse.ServerChanges = make([]*data.SyncItem, 0, len(syncResponse.ServerChanges))
-	for _, change := range syncResponse.ServerChanges {
-		protoChange, err := h.convertDomainSyncItemToProto(change)
-		if err != nil {
-			continue // Пропускаем элементы с ошибками
+// convertServerChanges конвертирует изменения с сервера
+func (h *SyncHandler) convertServerChanges(changes []services.SyncItem) []*data.SyncItem {
+	protoChanges := make([]*data.SyncItem, 0, len(changes))
+	for _, change := range changes {
+		if protoChange, err := h.convertDomainSyncItemToProto(change); err == nil {
+			protoChanges = append(protoChanges, protoChange)
 		}
-		protoResponse.ServerChanges = append(protoResponse.ServerChanges, protoChange)
 	}
-
-	return protoResponse, nil
+	return protoChanges
 }
 
 // convertProtoSyncItemToDomain конвертирует protobuf SyncItem в доменный объект
@@ -135,15 +157,15 @@ func (h *SyncHandler) convertDomainSyncResultToProto(result services.SyncResult)
 // convertProtoDataItemToDomain конвертирует protobuf DataItem в доменный объект
 func (h *SyncHandler) convertProtoDataItemToDomain(item *data.DataItem) (*entities.DataItem, error) {
 	dataItem := &entities.DataItem{
-		ID:        item.ID,
-		UserID:    item.UserID,
+		ID:        item.Id,
+		UserID:    item.UserId,
 		Type:      h.convertProtoDataType(item.Type),
 		Name:      "", // Имя извлекается из метаданных
 		Data:      item.Data,
 		Version:   item.Version,
 		IsDeleted: item.IsDeleted,
-		CreatedAt: item.CreatedAt,
-		UpdatedAt: item.UpdatedAt,
+		CreatedAt: item.CreatedAt.AsTime(),
+		UpdatedAt: item.UpdatedAt.AsTime(),
 	}
 
 	// Устанавливаем метаданные
@@ -159,14 +181,14 @@ func (h *SyncHandler) convertProtoDataItemToDomain(item *data.DataItem) (*entiti
 // convertDomainDataItemToProto конвертирует доменный DataItem в protobuf
 func (h *SyncHandler) convertDomainDataItemToProto(item *entities.DataItem) (*data.DataItem, error) {
 	protoItem := &data.DataItem{
-		ID:        item.ID,
-		UserID:    item.UserID,
+		Id:        item.ID,
+		UserId:    item.UserID,
 		Type:      h.convertDomainDataTypeToProto(item.Type),
 		Data:      item.Data,
 		Version:   item.Version,
 		IsDeleted: item.IsDeleted,
-		CreatedAt: item.CreatedAt,
-		UpdatedAt: item.UpdatedAt,
+		CreatedAt: timestamppb.New(item.CreatedAt),
+		UpdatedAt: timestamppb.New(item.UpdatedAt),
 	}
 
 	// Конвертируем метаданные в строку

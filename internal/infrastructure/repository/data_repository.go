@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/fylgushev/go-diplom-final/internal/domain/entities"
-	"github.com/fylgushev/go-diplom-final/internal/domain/interfaces"
+	"github.com/fylgushev/go-diplom-final/internal/domain/services"
 )
 
 // DataRepository реализует интерфейс DataRepository с использованием GORM
@@ -17,7 +17,7 @@ type DataRepository struct {
 }
 
 // NewDataRepository создает новый экземпляр DataRepository
-func NewDataRepository(db *gorm.DB) interfaces.DataRepository {
+func NewDataRepository(db *gorm.DB) services.DataRepository {
 	return &DataRepository{db: db}
 }
 
