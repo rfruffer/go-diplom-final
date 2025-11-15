@@ -105,9 +105,13 @@ generate:
 proto:
 	@echo "Generating protobuf files..."
 	@mkdir -p pkg/proto/auth pkg/proto/data
-	@protoc --go_out=. --go_opt=paths=source_relative \
+	@export PATH=$$PATH:~/protoc/bin:~/go/bin && \
+		protoc --go_out=. --go_opt=paths=source_relative \
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
 		proto/auth/*.proto proto/data/*.proto
+	@mv proto/auth/*.pb.go pkg/proto/auth/ 2>/dev/null || true
+	@mv proto/data/*.pb.go pkg/proto/data/ 2>/dev/null || true
+	@echo "Protobuf files generated successfully!"
 
 ## Install dependencies
 deps:

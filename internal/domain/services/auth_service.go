@@ -10,6 +10,7 @@ import (
 	"github.com/fylgushev/go-diplom-final/internal/domain/entities"
 	"github.com/fylgushev/go-diplom-final/pkg/proto/auth"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var (
@@ -41,10 +42,10 @@ func NewAuthService(userRepo UserRepository, tokenManager *TokenManager) *AuthSe
 
 // Register creates a new user account
 func (s *AuthService) Register(ctx context.Context, req *auth.RegisterRequest) (*auth.RegisterResponse, error) {
-	if req.Login == "" || req.Password == "" {
+	if err := validateCredentials(req.Login, req.Password); err != nil {
 		return &auth.RegisterResponse{
 			Success: false,
-			Message: "login and password are required",
+			Message: err.Error(),
 		}, nil
 	}
 
@@ -76,10 +77,10 @@ func (s *AuthService) Register(ctx context.Context, req *auth.RegisterRequest) (
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	// Generate tokens
-	tokens, err := s.tokenManager.GenerateTokens(user.ID, user.Username)
+	// Generate and return tokens
+	tokens, err := s.generateUserTokens(user)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate tokens: %w", err)
+		return nil, err
 	}
 
 	return &auth.RegisterResponse{
@@ -87,16 +88,16 @@ func (s *AuthService) Register(ctx context.Context, req *auth.RegisterRequest) (
 		Message:      "user registered successfully",
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
-		ExpiresAt:    tokens.ExpiresAt,
+		ExpiresAt:    timestamppb.New(tokens.ExpiresAt),
 	}, nil
 }
 
 // Login authenticates a user and returns tokens
 func (s *AuthService) Login(ctx context.Context, req *auth.LoginRequest) (*auth.LoginResponse, error) {
-	if req.Login == "" || req.Password == "" {
+	if err := validateCredentials(req.Login, req.Password); err != nil {
 		return &auth.LoginResponse{
 			Success: false,
-			Message: "login and password are required",
+			Message: err.Error(),
 		}, nil
 	}
 
@@ -118,9 +119,9 @@ func (s *AuthService) Login(ctx context.Context, req *auth.LoginRequest) (*auth.
 	}
 
 	// Generate tokens
-	tokens, err := s.tokenManager.GenerateTokens(user.ID, user.Username)
+	tokens, err := s.generateUserTokens(user)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate tokens: %w", err)
+		return nil, err
 	}
 
 	return &auth.LoginResponse{
@@ -128,13 +129,8 @@ func (s *AuthService) Login(ctx context.Context, req *auth.LoginRequest) (*auth.
 		Message:      "login successful",
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
-		ExpiresAt:    tokens.ExpiresAt,
-		User: &auth.User{
-			ID:        user.ID,
-			Login:     user.Username,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-		},
+		ExpiresAt:    timestamppb.New(tokens.ExpiresAt),
+		User:         convertUserToProto(user),
 	}, nil
 }
 
@@ -155,9 +151,9 @@ func (s *AuthService) ValidateToken(ctx context.Context, req *auth.ValidateToken
 
 	return &auth.ValidateTokenResponse{
 		Valid:     true,
-		UserID:    claims.UserID,
+		UserId:    claims.UserID,
 		Login:     claims.Login,
-		ExpiresAt: claims.ExpiresAt.Time,
+		ExpiresAt: timestamppb.New(claims.ExpiresAt.Time),
 	}, nil
 }
 
@@ -183,7 +179,7 @@ func (s *AuthService) RefreshToken(ctx context.Context, req *auth.RefreshTokenRe
 		Message:      "tokens refreshed successfully",
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
-		ExpiresAt:    tokens.ExpiresAt,
+		ExpiresAt:    timestamppb.New(tokens.ExpiresAt),
 	}, nil
 }
 
@@ -200,4 +196,31 @@ func (s *AuthService) GetUserFromToken(ctx context.Context, token string) (*enti
 	}
 
 	return user, nil
+}
+
+// validateCredentials проверяет валидность логина и пароля
+func validateCredentials(login, password string) error {
+	if login == "" || password == "" {
+		return errors.New("login and password are required")
+	}
+	return nil
+}
+
+// generateUserTokens генерирует токены для пользователя
+func (s *AuthService) generateUserTokens(user *entities.User) (*TokenPair, error) {
+	tokens, err := s.tokenManager.GenerateTokens(user.ID, user.Username)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate tokens: %w", err)
+	}
+	return tokens, nil
+}
+
+// convertUserToProto конвертирует доменного пользователя в protobuf
+func convertUserToProto(user *entities.User) *auth.User {
+	return &auth.User{
+		Id:        user.ID,
+		Login:     user.Username,
+		CreatedAt: timestamppb.New(user.CreatedAt),
+		UpdatedAt: timestamppb.New(user.UpdatedAt),
+	}
 }

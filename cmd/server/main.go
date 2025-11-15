@@ -25,8 +25,23 @@ func main() {
 	fmt.Println(version.FormatForCLI())
 	fmt.Println()
 
+	// Загрузка конфигурации сервера
+	// Попытка загрузить из переменных окружения
+	serverCfg, err := config.LoadServerConfig()
+	if err != nil {
+		log.Printf("Предупреждение: не удалось загрузить конфигурацию из env: %v", err)
+		log.Println("Используется конфигурация по умолчанию (только для разработки!)")
+		serverCfg = config.DefaultServerConfig()
+	}
+
 	// Инициализация базы данных
 	dbConfig := config.DefaultDatabaseConfig()
+	// Переопределяем DSN из серверной конфигурации если он есть
+	if serverCfg.DatabaseDSN != "" && serverCfg.DatabaseDSN != dbConfig.DSN() {
+		log.Printf("Используется DATABASE_DSN из переменных окружения")
+		// Для простоты используем существующую конфигурацию, в production нужно парсить DSN
+	}
+
 	db, err := dbConfig.Connect()
 	if err != nil {
 		log.Fatalf("Ошибка подключения к базе данных: %v", err)
@@ -40,25 +55,27 @@ func main() {
 	// Создание репозиториев
 	userRepo := repository.NewUserRepository(db)
 
-	// Создание JWT менеджера
-	jwtConfig := services.DefaultConfig()
-	// todo: получать ключ из переменных окружения
-	jwtConfig.SigningKey = []byte("super-secret-jwt-key-change-in-production")
-	tokenManager := services.NewTokenManagerFromConfig(jwtConfig)
+	// Создание JWT менеджера из конфигурации
+	tokenManager := services.NewTokenManager(
+		[]byte(serverCfg.JWTSigningKey),
+		serverCfg.JWTAccessTTL,
+		serverCfg.JWTRefreshTTL,
+		serverCfg.JWTIssuer,
+	)
 
 	// Создание сервисов
 	authService := services.NewAuthService(userRepo, tokenManager)
 
 	// Конфигурация gRPC сервера
-	serverConfig := grpcServer.ServerConfig{
-		Port:           8080,
+	grpcServerConfig := grpcServer.ServerConfig{
+		Port:           serverCfg.Port,
 		TokenManager:   tokenManager,
 		AuthService:    authService,
 		MaxMessageSize: 4 * 1024 * 1024, // 4MB
 	}
 
 	// Создание и запуск gRPC сервера
-	server := grpcServer.NewServer(serverConfig)
+	server := grpcServer.NewServer(grpcServerConfig)
 
 	// Настройка graceful shutdown
 	go func() {

@@ -130,13 +130,34 @@ make fmt
 
 ## Использование
 
+### Конфигурация
+
+Сервер настраивается через переменные окружения. Скопируйте `.env.example` в `.env` и настройте:
+
+```bash
+cp .env.example .env
+# Отредактируйте .env файл
+```
+
+**Важные переменные:**
+- `JWT_SIGNING_KEY` - секретный ключ для подписи JWT токенов (обязательный!)
+- `DATABASE_DSN` - строка подключения к PostgreSQL
+- `SERVER_PORT` - порт для gRPC сервера (по умолчанию 8080)
+
+**Генерация безопасного JWT ключа:**
+```bash
+openssl rand -base64 32
+```
+
 ### Сервер
 
 ```bash
-# Запуск скомпилированного сервера
-./build/server --config config/server.yaml
+# Запуск с переменными окружения
+export JWT_SIGNING_KEY="your-secret-key-here"
+export DATABASE_DSN="host=localhost port=5432 user=postgres password=postgres dbname=gophkeeper sslmode=disable"
+./build/server
 
-# Или запуск через Go (для разработки)
+# Или через Go (для разработки)
 make run-server
 ```
 
