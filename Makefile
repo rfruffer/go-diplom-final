@@ -1,14 +1,12 @@
 .PHONY: build build-server build-client clean test test-cover lint vet fmt generate proto docker-build docker-run help
 
 # Build info
-VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+VERSION ?= 1.0.0
 BUILD_DATE ?= $(shell date -u +"%Y-%m-%d %H:%M:%S UTC")
-COMMIT_HASH ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
 # Go build flags
-LDFLAGS = -ldflags "-X 'github.com/fylgushev/gophkeeper/pkg/version.Version=$(VERSION)' \
-                   -X 'github.com/fylgushev/gophkeeper/pkg/version.BuildDate=$(BUILD_DATE)' \
-                   -X 'github.com/fylgushev/gophkeeper/pkg/version.CommitHash=$(COMMIT_HASH)'"
+LDFLAGS = -ldflags "-X 'github.com/fylgushev/go-diplom-final/pkg/version.Version=$(VERSION)' \
+                   -X 'github.com/fylgushev/go-diplom-final/pkg/version.BuildDate=$(BUILD_DATE)'"
 
 # Build directories
 BUILD_DIR = build
@@ -43,9 +41,10 @@ build-all: clean
 	# Windows
 	@GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/server-windows-amd64.exe ./cmd/server
 	@GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/client-windows-amd64.exe ./cmd/client
-	# macOS
+	# macOS Intel
 	@GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/server-darwin-amd64 ./cmd/server
 	@GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/client-darwin-amd64 ./cmd/client
+	# macOS Apple Silicon
 	@GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o $(BUILD_DIR)/server-darwin-arm64 ./cmd/server
 	@GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o $(BUILD_DIR)/client-darwin-arm64 ./cmd/client
 
@@ -64,7 +63,13 @@ test-cover:
 	@echo "Running tests with coverage..."
 	@go test -v -coverprofile=coverage.out ./...
 	@go tool cover -html=coverage.out -o coverage.html
+	@go tool cover -func=coverage.out | tail -1
 	@echo "Coverage report generated: coverage.html"
+
+## Run tests with coverage summary
+test-cover-summary:
+	@echo "Running tests with coverage summary..."
+	@go test -cover ./... 2>&1 | grep coverage
 
 ## Run unit tests
 test-unit:
@@ -99,9 +104,14 @@ generate:
 ## Generate protobuf files
 proto:
 	@echo "Generating protobuf files..."
-	@protoc --go_out=. --go_opt=paths=source_relative \
+	@mkdir -p pkg/proto/auth pkg/proto/data
+	@export PATH=$$PATH:~/protoc/bin:~/go/bin && \
+		protoc --go_out=. --go_opt=paths=source_relative \
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
-		internal/api/proto/*.proto
+		proto/auth/*.proto proto/data/*.proto
+	@mv proto/auth/*.pb.go pkg/proto/auth/ 2>/dev/null || true
+	@mv proto/data/*.pb.go pkg/proto/data/ 2>/dev/null || true
+	@echo "Protobuf files generated successfully!"
 
 ## Install dependencies
 deps:
@@ -115,6 +125,17 @@ dev-deps:
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	@go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	@go install github.com/stretchr/testify@latest
+
+## Run server locally
+run-server:
+	@echo "Running server..."
+	@go run ./cmd/server
+
+## Run client locally
+run-client:
+	@echo "Running client..."
+	@go run ./cmd/client
 
 ## Build Docker images
 docker-build:
